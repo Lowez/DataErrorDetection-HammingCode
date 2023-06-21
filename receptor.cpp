@@ -41,10 +41,13 @@ void receiver(string data){
 				int wrongbit = 0;
                 //avaliando a expressão binaria da variavel ans
 				for(int i = 0 ; i < ans.size() ; i++){
-					if(ans[i]=='1') wrongbit+=power;
+					if(ans[i]=='1') {
+                        wrongbit+=power;
+                        cout << "numero bit " << wrongbit << " está errado " << endl; 
+                    }
 					power*=2;
 				}
-				cout << "numero bit " << wrongbit << " está errado " << endl;
+				
 			}
 			// ise não há nenhuma ocorrencia de bits 1 então está certo
 			else{
