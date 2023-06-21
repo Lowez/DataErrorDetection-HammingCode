@@ -1,56 +1,74 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <stdlib.h>
 using namespace std;
 class hamming{
 	public:
-		string data; //it is the raw data received
-		int m , r = 0; // n is the length of raw data and r is the number of redundant bits
-		char * msg; // it will store the all bits (data + redundant). We made it dynamic because at compile time we dont know how much redundant bits will be there, we will initialize memory to it once we know the number of redundant bits.
+		string data;
+		int rawDataSize , bitsDeParidade = 0;
+		string dadoFinal;
+
 		hamming(string data){
 			this->data = data;
-			//reversing the data received
+
 			reverse(data.begin(),data.end());
-			m = data.size();
-			int power = 1;
+			rawDataSize = data.size();
+			int potencia = 1;
 
-			//finding the number of redundant bits and storing them in r
-			while(power < (m + r + 1)){
-				r++;
-				power*=2;
+			// Determina a quantidade de bits de paridade que haverão no dado enviado
+			/* 
+				A cada iteração, a potencia é multiplicada por 2,
+				até que seu valor seja maior que o tamanho do dado final
+			*/
+			while (potencia < (rawDataSize + bitsDeParidade + 1)){
+				bitsDeParidade++;
+				potencia*=2;
 			}
-			//Allocating memory to our dynamic msg array(Note we are using one based indexing).
-			msg = new char[m+r+1];
-			int curr = 0;
 
-			//initializing the msg with data bits and for redundant bits, an initial value of n
-			for(int i = 1 ; i <= m+r ; i++){
+			int dataBit = 0;
+
+			// Preenche o dado final com os bits de paridade e os bits da raw data recebida
+			for (int i = 1 ; i <= rawDataSize + bitsDeParidade ; i++){
+
+				// Checa se i é potência de 2, caso seja, irá dar falso e no else a posição no dado final será salva para um bit de paridade
+				/* 
+					Caso i == 8, seu binario é 0b1000, e o binário de 8 - 1 é 0b0111
+					Então: 0b1000 & 0b0111 = 0b0000 = false
+				*/
 				if(i & (i-1)){
-					msg[i] = data[curr++];
+					dadoFinal[i] = data[dataBit++];
 				}
-				else msg[i] = 'n';
+				else {
+					dadoFinal[i] = 'n';
+				}
 			}
-			//function call to set the redundant bits
-			setRedundantBits();
+
+			determinaBitsDeParidade();
 		}
-		//function to show the whole msg
+
+		// Imprime cada bit da data
 		void showmsg(){
 			cout << "the data packet to be sent is : ";
-			for(int i = m+r ; i >= 1 ; i--){
-				cout << msg[i] << " ";
+			for(int i = rawDataSize + bitsDeParidade ; i >= 1 ; i--){
+				cout << dadoFinal[i] << " ";
 			}
 			cout << endl;
 		}
-		void setRedundantBits(){
+
+		// Determina os bits de paridade do dado final
+		void determinaBitsDeParidade(){
 			int bit = 0;
-            for (int i = 1; i <= m + r; i *= 2) {
+            for (int i = 1; i <= rawDataSize + bitsDeParidade; i *= 2) {
                 int count = 0;
-                for (int j = i + 1; j <= m + r; j++) {
+                for (int j = i + 1; j <= rawDataSize + bitsDeParidade; j++) {
                     if (j & (1 << bit)) {
-                        count += msg[j] == '1';
+                        count += dadoFinal[j] == '1';
                     }
                 }
-                msg[i] = count & 1 ? '1' : '0';
+				// O for acima conta quantos bits 1 existem no dado, então, é definido o bit de paridade como 1 ou 0
+				// Caso o número de bits 1 seja impar, será 1, caso seja par, será 0
+                dadoFinal[i] = count % 2 != 0 ? '1' : '0';
                 bit++;
             }
             showmsg();
@@ -60,21 +78,21 @@ class hamming{
 			string ans = "";
 			int bit = 0;
 			//this loop corresponds to the logic used in set redundant bits function
-			for(int i = 1 ; i <= m+r ; i*=2){
+			for(int i = 1 ; i <= rawDataSize + bitsDeParidade ; i*=2){
 				int count = 0;
-				for(int j = i+1 ; j<=m+r ; j++){
+				for(int j = i + 1 ; j<= rawDataSize + bitsDeParidade ; j++){
 					if(j & (1 << bit)){
-						if(msg[j] == '1') count++;
+						if(dadoFinal[j] == '1') count++;
 					}
 				}
 				//incrementing the ans variable with the parity of redundant bit
 				// if it was right then add 0 else 1
 				if(count & 1){
-					if(msg[i] == '1') ans.push_back('0');
+					if(dadoFinal[i] == '1') ans.push_back('0');
 					else ans.push_back('1');
 				}
 				else{
-					if(msg[i]=='0') ans.push_back('0');
+					if(dadoFinal[i]=='0') ans.push_back('0');
 					else ans.push_back('1');
 				}
 				bit++;
@@ -97,14 +115,14 @@ class hamming{
 		}
 };
 int main(){
-	string data = "1011001";
+	// freopen("input.in", "r", stdin);
+	string data;
+
+	getline(cin, data);
+	// data = "1011001";
+
 	hamming h(data);
-	// manipulating any ith data bit to check if receiver is detecting a error in that bit. If you eliminate the following line then correct code will be sent to receiver following that no error is received
-	
-	//h.msg[i] == '0' ? h.msg[i] = '1' : h.msg[i] = '0';
 
 	h.receiver();
 	return 0;
 }
-//time complexity = O(nlogn) where , n = databits + redundant bits
-//this code is contributed by Mayank Sharma.
