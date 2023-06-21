@@ -13,44 +13,6 @@ public:
     int rawDataSize, bitsDeParidade = 0;
     string dadoFinal;
 
-    Hamming(string data)
-    {
-        this->data = data;
-        reverse(data.begin(), data.end());
-        rawDataSize = data.size();
-        int potencia = 1;
-
-        // Determina a quantidade de bits de paridade que haverão no dado enviado
-        /* 
-            A cada iteração, a potencia é multiplicada por 2,
-            até que seu valor seja maior que o tamanho do dado final
-        */
-        while (potencia < (rawDataSize + bitsDeParidade + 1))
-        {
-            bitsDeParidade++;
-            potencia *= 2;
-        }
-
-        int dataBit = 0;
-        
-        // Preenche o dado final com os bits de paridade e os bits da raw data recebida
-        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
-        {
-
-            // Checa se i é potência de 2, caso seja, irá dar falso e no else a posição no dado final será salva para um bit de paridade
-            if (!isPowerOfTwo(i))
-            {
-                dadoFinal[i] = data[dataBit++];
-            }
-            else
-            {
-                dadoFinal[i] = 'n';
-            }
-        }
-
-        setRedundantBits();
-    }
-
     bool isPowerOfTwo(int number)
     {
         if (number <= 0)
@@ -64,7 +26,6 @@ public:
         return (number & (number - 1)) == 0;
     }
 
-
     // Imprime cada bit da data
     void showMsg(const string &printMessage)
     {
@@ -75,53 +36,6 @@ public:
         }
         cout << endl;
     }
-
-    void setRedundantBits()
-    {
-        int redundantBitPosition = 0;
-
-        for (int redundantBit = 1; redundantBit <= rawDataSize + bitsDeParidade; redundantBit *= 2)
-        {
-            int count = 0;
-
-            for (int dataBit = redundantBit + 1; dataBit <= rawDataSize + bitsDeParidade; dataBit++)
-            {
-                if ((dataBit & (1 << redundantBitPosition)) != 0)
-                {
-                    if (dadoFinal[dataBit] == '1')
-                    {
-                        count++;
-                    }
-                }
-            }
-
-            dadoFinal[redundantBit] = (count % 2 == 1) ? '1' : '0';
-            redundantBitPosition++;
-        }
-
-        showMsg("O pacote de dados enviado eh: ");
-        addNoise();
-    }
-
-    void addNoise()
-    {
-        srand(time(0));
-
-        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
-        {
-            if (dadoFinal[i] == '0' || dadoFinal[i] == '1')
-            {
-                if ((rand() % 100) == 99)
-                {
-                    dadoFinal[i] = (dadoFinal[i] == '0') ? '1' : '0';
-                }
-            }
-        }
-
-        showMsg("Dados apos ruido:             ");
-        receiver();
-    }
-
     
     void receiver()
     {
@@ -180,6 +94,90 @@ public:
         {
             cout << "Pacote de dados corretamente recebido." << endl;
         }
+    }
+
+    void addNoise()
+    {
+        srand(time(0));
+
+        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
+        {
+            if (dadoFinal[i] == '0' || dadoFinal[i] == '1')
+            {
+                if ((rand() % 100) == 99)
+                {
+                    dadoFinal[i] = (dadoFinal[i] == '0') ? '1' : '0';
+                }
+            }
+        }
+
+        showMsg("Dados apos ruido:             ");
+        receiver();
+    }
+
+    void setRedundantBits()
+    {
+        int redundantBitPosition = 0;
+
+        for (int redundantBit = 1; redundantBit <= rawDataSize + bitsDeParidade; redundantBit *= 2)
+        {
+            int count = 0;
+
+            for (int dataBit = redundantBit + 1; dataBit <= rawDataSize + bitsDeParidade; dataBit++)
+            {
+                if ((dataBit & (1 << redundantBitPosition)) != 0)
+                {
+                    if (dadoFinal[dataBit] == '1')
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            dadoFinal[redundantBit] = (count % 2 == 1) ? '1' : '0';
+            redundantBitPosition++;
+        }
+
+        showMsg("O pacote de dados enviado eh: ");
+        addNoise();
+    }
+
+    Hamming(string data)
+    {
+        this->data = data;
+        reverse(data.begin(), data.end());
+        rawDataSize = data.size();
+        int potencia = 1;
+
+        // Determina a quantidade de bits de paridade que haverão no dado enviado
+        /* 
+            A cada iteração, a potencia é multiplicada por 2,
+            até que seu valor seja maior que o tamanho do dado final
+        */
+        while (potencia < (rawDataSize + bitsDeParidade + 1))
+        {
+            bitsDeParidade++;
+            potencia *= 2;
+        }
+
+        int dataBit = 0;
+        
+        // Preenche o dado final com os bits de paridade e os bits da raw data recebida
+        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
+        {
+
+            // Checa se i é potência de 2, caso seja, irá dar falso e no else a posição no dado final será salva para um bit de paridade
+            if (!isPowerOfTwo(i))
+            {
+                dadoFinal[i] = data[dataBit++];
+            }
+            else
+            {
+                dadoFinal[i] = 'n';
+            }
+        }
+
+        setRedundantBits();
     }
 };
 
