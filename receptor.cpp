@@ -73,6 +73,46 @@ class hamming{
             }
             showmsg();
 		}
+		void receiver(){
+			//A variável 'ans' vai segurar o valor de bits redundantes, se ele estão certos e pares, eles vão segurar o valor 0, se existir um erro, vão segurar o valor 1
+            string ans = "";
+			int bit = 0;
+			//this loop corresponds to the logic used in set redundant bits function
+			for(int i = 1 ; i <= rawDataSize + bitsDeParidade ; i*=2){
+				int count = 0;
+				for(int j = i + 1 ; j<= rawDataSize + bitsDeParidade ; j++){
+					if(j & (1 << bit)){
+						if(dadoFinal[j] == '1') count++;
+					}
+				}
+				//incrementiando a variavel ans com a paridade do bit de redundancia
+				// se está certo 0, se errado 1
+				if(count & 1){
+					if(dadoFinal[i] == '1') ans.push_back('0');
+					else ans.push_back('1');
+				}
+				else{
+					if(dadoFinal[i]=='0') ans.push_back('0');
+					else ans.push_back('1');
+				}
+				bit++;
+			}
+            // se existe alguma ocorroencia do bit 1 então tem problema
+			if(ans.find('1') != string::npos){
+				int power = 1;
+				int wrongbit = 0;
+                //avaliando a expressão binaria da variavel ans
+				for(int i = 0 ; i < ans.size() ; i++){
+					if(ans[i]=='1') wrongbit+=power;
+					power*=2;
+				}
+				cout << "numero bit " << wrongbit << " está errado " << endl;
+			}
+			// ise não há nenhuma ocorrencia de bits 1 então está certo
+			else{
+				cout << "pacode de dados foi recebido com sucesso! " << endl;
+			}
+		}
 };
 int main(){
 	// freopen("input.in", "r", stdin);
