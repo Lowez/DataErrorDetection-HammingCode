@@ -122,7 +122,7 @@ public:
         receiver();
     }
 
-    // FIXME: receiver function only checks for one error; if there are more, it only returns the first found;
+    
     void receiver()
     {
         //A variável 'ans' vai segurar o valor de bits redundantes, se ele estão certos e pares, eles vão segurar o valor 0, se existir um erro, vão segurar o valor 1
