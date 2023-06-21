@@ -82,7 +82,5 @@ int main(){
 	// data = "1011001";
 
 	hamming h(data);
-
-	h.receiver();
 	return 0;
 }

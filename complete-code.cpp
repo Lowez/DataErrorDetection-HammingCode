@@ -10,34 +10,41 @@ class Hamming
 {
 public:
     string data;
-    int sizeOfData, numberOfRedundantBits = 0;
-    char *msg;
+    int rawDataSize, bitsDeParidade = 0;
+    string dadoFinal;
 
     Hamming(string data)
     {
         this->data = data;
         reverse(data.begin(), data.end());
-        sizeOfData = data.size();
-        int power = 1;
+        rawDataSize = data.size();
+        int potencia = 1;
 
-        while (power < (sizeOfData + numberOfRedundantBits + 1))
+        // Determina a quantidade de bits de paridade que haverão no dado enviado
+        /* 
+            A cada iteração, a potencia é multiplicada por 2,
+            até que seu valor seja maior que o tamanho do dado final
+        */
+        while (potencia < (rawDataSize + bitsDeParidade + 1))
         {
-            numberOfRedundantBits++;
-            power *= 2;
+            bitsDeParidade++;
+            potencia *= 2;
         }
 
-        msg = new char[sizeOfData + numberOfRedundantBits + 1];
-
-        int curr = 0;
-        for (int i = 1; i <= sizeOfData + numberOfRedundantBits; i++)
+        int dataBit = 0;
+        
+        // Preenche o dado final com os bits de paridade e os bits da raw data recebida
+        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
         {
+
+            // Checa se i é potência de 2, caso seja, irá dar falso e no else a posição no dado final será salva para um bit de paridade
             if (!isPowerOfTwo(i))
             {
-                msg[i] = data[curr++];
+                dadoFinal[i] = data[dataBit++];
             }
             else
             {
-                msg[i] = 'n';
+                dadoFinal[i] = 'n';
             }
         }
 
@@ -50,15 +57,21 @@ public:
         {
             return false;
         }
+        /* 
+            Caso i == 8, seu binario é 0b1000, e o binário de 8 - 1 é 0b0111
+            Então: 0b1000 & 0b0111 = 0b0000 = false
+        */
         return (number & (number - 1)) == 0;
     }
 
+
+    // Imprime cada bit da data
     void showMsg(const string &printMessage)
     {
         cout << printMessage;
-        for (int i = sizeOfData + numberOfRedundantBits; i >= 1; i--)
+        for (int i = rawDataSize + bitsDeParidade; i >= 1; i--)
         {
-            cout << msg[i] << " ";
+            cout << dadoFinal[i] << " ";
         }
         cout << endl;
     }
@@ -67,26 +80,26 @@ public:
     {
         int redundantBitPosition = 0;
 
-        for (int redundantBit = 1; redundantBit <= sizeOfData + numberOfRedundantBits; redundantBit *= 2)
+        for (int redundantBit = 1; redundantBit <= rawDataSize + bitsDeParidade; redundantBit *= 2)
         {
             int count = 0;
 
-            for (int dataBit = redundantBit + 1; dataBit <= sizeOfData + numberOfRedundantBits; dataBit++)
+            for (int dataBit = redundantBit + 1; dataBit <= rawDataSize + bitsDeParidade; dataBit++)
             {
                 if ((dataBit & (1 << redundantBitPosition)) != 0)
                 {
-                    if (msg[dataBit] == '1')
+                    if (dadoFinal[dataBit] == '1')
                     {
                         count++;
                     }
                 }
             }
 
-            msg[redundantBit] = (count % 2 == 1) ? '1' : '0';
+            dadoFinal[redundantBit] = (count % 2 == 1) ? '1' : '0';
             redundantBitPosition++;
         }
 
-        showMsg("The data packet to be sent is: ");
+        showMsg("O pacote de dados enviado eh: ");
         addNoise();
     }
 
@@ -94,79 +107,90 @@ public:
     {
         srand(time(0));
 
-        for (int i = 1; i <= sizeOfData + numberOfRedundantBits; i++)
+        for (int i = 1; i <= rawDataSize + bitsDeParidade; i++)
         {
-            if (msg[i] == '0' || msg[i] == '1')
+            if (dadoFinal[i] == '0' || dadoFinal[i] == '1')
             {
                 if ((rand() % 100) == 99)
                 {
-                    msg[i] = (msg[i] == '0') ? '1' : '0';
+                    dadoFinal[i] = (dadoFinal[i] == '0') ? '1' : '0';
                 }
             }
         }
 
-        showMsg("Message after noise addition:  ");
+        showMsg("Dados apos ruido:             ");
         receiver();
     }
 
     // FIXME: receiver function only checks for one error; if there are more, it only returns the first found;
     void receiver()
     {
+        //A variável 'ans' vai segurar o valor de bits redundantes, se ele estão certos e pares, eles vão segurar o valor 0, se existir um erro, vão segurar o valor 1
         string ans = "";
         int bit = 0;
 
-        for (int i = 1; i <= sizeOfData + numberOfRedundantBits; i *= 2)
+        for (int i = 1; i <= rawDataSize + bitsDeParidade; i *= 2)
         {
             int count = 0;
 
-            for (int j = i + 1; j <= sizeOfData + numberOfRedundantBits; j++)
+            for (int j = i + 1; j <= rawDataSize + bitsDeParidade; j++)
             {
                 if (j & (1 << bit))
                 {
-                    if (msg[j] == '1')
+                    if (dadoFinal[j] == '1')
                     {
                         count++;
                     }
                 }
             }
 
+            //incrementiando a variavel ans com a paridade do bit de redundancia
+            // se está certo 0, se errado 1
             if (count & 1)
             {
-                ans.push_back((msg[i] == '1') ? '0' : '1');
+                ans.push_back((dadoFinal[i] == '1') ? '0' : '1');
             }
             else
             {
-                ans.push_back((msg[i] == '0') ? '0' : '1');
+                ans.push_back((dadoFinal[i] == '0') ? '0' : '1');
             }
             bit++;
         }
 
+        // se existe alguma ocorroencia do bit 1 então tem problema
         if (ans.find('1') != string::npos)
         {
-            int power = 1;
+            int potencia = 1;
             int wrongBit = 0;
 
+            //avaliando a expressão binaria da variavel ans
             for (int i = 0; i < ans.size(); i++)
             {
                 if (ans[i] == '1')
                 {
-                    wrongBit += power;
+                    wrongBit += potencia;
                 }
-                power *= 2;
+                potencia *= 2;
             }
 
-            cout << "Bit number " << wrongBit << " is wrong and has an error." << endl;
+            cout << "Bit numero: " << wrongBit << " esta errado e tem um erro." << endl;
         }
+        // ise não há nenhuma ocorrencia de bits 1 então está certo
         else
         {
-            cout << "Correct data packet received." << endl;
+            cout << "Pacote de dados corretamente recebido." << endl;
         }
     }
 };
 
 int main()
 {
-    string data = "1011001";
+    // freopen("input.in", "r", stdin);
+	string data;
+
+	getline(cin, data);
+	// data = "1011001";
+
     Hamming h(data);
     return 0;
 }
