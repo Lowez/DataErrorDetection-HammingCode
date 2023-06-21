@@ -169,11 +169,11 @@ public:
                 if (ans[i] == '1')
                 {
                     wrongBit += potencia;
+
+                    cout << "Bit numero: " << wrongBit << " esta errado e tem um erro." << endl;
                 }
                 potencia *= 2;
             }
-
-            cout << "Bit numero: " << wrongBit << " esta errado e tem um erro." << endl;
         }
         // ise não há nenhuma ocorrencia de bits 1 então está certo
         else
